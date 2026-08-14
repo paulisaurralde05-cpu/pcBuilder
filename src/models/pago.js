@@ -6,6 +6,6 @@ const Pago = sequelize.define('Pago', {
     estadoPago: { type: DataTypes.STRING(50), allowNull: false },
     fecha: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     monto: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
-}, { tableName: 'pagos', timestamps: false });
+}, { tableName: 'pagos', timestamps: true });
 
 export default Pago;

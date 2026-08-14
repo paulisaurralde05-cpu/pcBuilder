@@ -8,6 +8,6 @@ const Administrador = sequelize.define('Administrador', {
     password: { type: DataTypes.STRING(200), allowNull: false },
     legajoEmpleado: { type: DataTypes.STRING(50), allowNull: false },
     nivelPermiso: { type: DataTypes.STRING(30), allowNull: false }
-}, { tableName: 'administradores', timestamps: true });
+}, { tableName: 'administradores', timestamps: false });
 
 export default Administrador;
