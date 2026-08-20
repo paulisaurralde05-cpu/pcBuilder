@@ -10,6 +10,7 @@ import DetallesCarrito from './detallesCarrito.js';
 import Pedido from './pedido.js';
 import DetallesPedido from './detallesPedido.js';
 import Pago from './pago.js';
+import Imagen from './imagen.js';
 
 // 1. Usuario-Domicilio (1 a N)
 Usuario.hasMany(Domicilio, { foreignKey: 'idUsuario', as: 'domicilios' });
@@ -51,6 +52,10 @@ DetallesPedido.belongsTo(Producto, { foreignKey: 'idProducto', as: 'producto' })
 Pedido.hasOne(Pago, { foreignKey: 'idPedido', as: 'pago' });
 Pago.belongsTo(Pedido, { foreignKey: 'idPedido' });
 
+// 11. Producto-Imagen (1 a N)
+Producto.hasMany(Imagen, {foreingKey: 'idProducto', as: 'imagenes'});
+Imagen.belongsTo(Producto, {foeringKey: 'idProducto', as: 'producto'});
+
 export {
     sequelize,
     Administrador,
@@ -63,5 +68,6 @@ export {
     DetallesCarrito,
     Pedido,
     DetallesPedido,
-    Pago
+    Pago,
+    Imagen
 };
