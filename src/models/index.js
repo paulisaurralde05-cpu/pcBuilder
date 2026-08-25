@@ -53,8 +53,8 @@ Pedido.hasOne(Pago, { foreignKey: 'idPedido', as: 'pago' });
 Pago.belongsTo(Pedido, { foreignKey: 'idPedido' });
 
 // 11. Producto-Imagen (1 a N)
-Producto.hasMany(Imagen, {foreingKey: 'idProducto', as: 'imagenes'});
-Imagen.belongsTo(Producto, {foeringKey: 'idProducto', as: 'producto'});
+Producto.hasMany(Imagen, {foreignKey: 'idProducto', as: 'imagenes'});
+Imagen.belongsTo(Producto, {foreignKey: 'idProducto', as: 'producto'});
 
 export {
     sequelize,
