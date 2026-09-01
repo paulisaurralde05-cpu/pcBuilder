@@ -11,7 +11,7 @@ export const encriptarPassword = async (password) => {
 };
 
 export const compararPassword = async (password, hash) => {
-    return bcrypt.compare(password, hash);
+    return await bcrypt.compare(password, hash);
 };
 
 export const generarToken = (payload, secret) => {
