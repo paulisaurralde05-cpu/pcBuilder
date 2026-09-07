@@ -1,4 +1,4 @@
-import { compararPassword, generarToken, JWT_SECRET_CLIENT, JWT_SECRET_ADMIN } from '../utils/auth.js';
+import { compararPassword, generarToken, JWT_SECRET_CLIENT, JWT_SECRET_ADMIN, encriptarPassword } from '../utils/auth.js';
 import Usuario from '../models/usuario.js';
 import Administrador from '../models/administrador.js';
 
@@ -77,7 +77,14 @@ export const registrarCliente = async (req, res) => {
             });
         }
 
-        const cliente = await Usuario.create({ nombre, apellido, email, password });
+        const passwordHash = await encriptarPassword(password);
+
+        const cliente = await Usuario.create({ 
+            nombre, 
+            apellido, 
+            email, 
+            password: passwordHash 
+        });
 
         const token = generarToken({
             id: cliente.id,
