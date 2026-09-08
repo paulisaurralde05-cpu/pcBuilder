@@ -176,3 +176,54 @@ export const loginAdmin = async (req, res) => {
         });
     }
 };
+
+export const registrarAdmin = async (req, res) => {
+    try {
+        const { nombre, apellido, email, password, legajoEmpleado, nivelPermiso } = req.body;
+
+        if (!nombre || !apellido || !email || !password || !legajoEmpleado || !nivelPermiso) {
+            return res.status(400).json({
+                estado: false,
+                mensaje: 'Todos los campos son obligatorios',
+            });
+        }
+
+        const existe = await Administrador.findOne({ where: { email } });
+        if (existe) {
+            return res.status(400).json({
+                estado: false,
+                mensaje: 'El email ya está registrado para un administrador',
+            });
+        }
+
+        const passwordHash = await encriptarPassword(password);
+
+        const nuevoAdmin = await Administrador.create({
+            nombre,
+            apellido,
+            email,
+            password: passwordHash,
+            legajoEmpleado,
+            nivelPermiso
+        });
+
+        res.status(201).json({
+            estado: true,
+            mensaje: 'Administrador registrado con éxito',
+            usuario: {
+                id: nuevoAdmin.id,
+                nombre: nuevoAdmin.nombre,
+                email: nuevoAdmin.email,
+                rol: nuevoAdmin.nivelPermiso
+            }
+        });
+
+    } catch (error) {
+        console.error('Error en registrarAdmin:', error);
+        res.status(500).json({
+            estado: false,
+            mensaje: 'Error al registrar el administrador',
+            error: error.message,
+        });
+    }
+};
