@@ -1,18 +1,46 @@
+import { Op } from 'sequelize';
 import Producto from '../models/producto.js';
 import Categoria from '../models/categoria.js';
 import Imagen from '../models/imagen.js';
 
 export const obtener = async (req, res) => {
     try {
-        const data = await Producto.findAll({
+        const { search, categoryId, idCategoria, page = 1, limit = 10 } = req.query;
+        
+       
+        const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+        
+        const whereClause = {};
+
+        
+        if (search) {
+            whereClause.nombre = { [Op.like]: `%${search}%` };
+        }
+
+        
+        const catId = categoryId || idCategoria;
+        if (catId) {
+            whereClause.idCategoria = catId; // Ajustar según el nombre del campo en tu modelo
+        }
+
+        const { count, rows } = await Producto.findAndCountAll({
+            where: whereClause,
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
             include: [
                 { model: Categoria, as: 'categoria' },
                 { model: Imagen, as: 'imagenes' }
-            ]
+            ],
+            distinct: true
         });
+
         res.json({
             estado: true,
-            data,
+            totalItems: count,
+            paginaActual: parseInt(page, 10),
+            totalPaginas: Math.ceil(count / limit),
+            data: rows,
         });
     } catch (error) {
         console.error('Error al obtener productos:', error);
@@ -59,7 +87,8 @@ export const obtenerPorId = async (req, res) => {
 export const crear = async (req, res) => {
     try {
         const { 
-            idCategoria, 
+            idCategoria,
+            categoryId, 
             nombre, 
             marca, 
             modelo, 
@@ -70,15 +99,8 @@ export const crear = async (req, res) => {
             especificacionesTecnicas 
         } = req.body;
 
-        if (!nombre || !precio || !idCategoria) {
-            return res.status(400).json({
-                estado: false,
-                mensaje: 'Debe ingresar nombre, precio y categoria.',
-            });
-        }
-
         const data = await Producto.create({
-            idCategoria,
+            idCategoria: idCategoria || categoryId,
             nombre,
             marca,
             modelo,

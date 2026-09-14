@@ -47,7 +47,7 @@ export const crear = async (req, res) => {
     try {
         const { nombre, descripcion } = req.body;
 
-        if (!nombre) {
+        if (!nombre || nombre.trim() === '') {
             return res.status(400).json({
                 estado: false,
                 mensaje: 'El nombre de la categoría es obligatorio',
