@@ -127,25 +127,21 @@ export const buscar = async (req, res) => {
         const pagina = Math.max(1, parseInt(req.query.pagina, 10) || 1);
         const limite = Math.max(1, parseInt(req.query.limite, 10) || 5);
         const offset = (pagina - 1) * limite;
-        // const where = {};
-        // const busqueda = req.query.busqueda?.trim();
-        // console.log('BUSQUEDA', busqueda)
-        // if (busqueda) {
-        //     where[Op.or] = [
-        //         { nombre: { [Op.like]: `%${busqueda}%` } },
-        //         { descripcion: { [Op.like]: `%${busqueda}%` } },
-        //         { precio: { [Op.like]: `%${busqueda}%` } }
-        //     ]
-        // }
+        const where = {};
+        const busqueda = req.query.busqueda?.trim();
+        console.log('BUSQUEDA', busqueda)
+        if (busqueda) {
+            where[Op.or] = [
+                { nombre: { [Op.like]: `%${busqueda}%` } },
+                { descripcion: { [Op.like]: `%${busqueda}%` } },
+            ]
+        }
 
         const { count, rows } = await Categoria.findAndCountAll({
-            // where,
+            where,
             limit: limite,
             offset,
             distinct: true,
-            // include: [
-            //     { model: Categoria, as: 'categoria' },
-            // ]
         })
         const totalPaginas = Math.ceil(count / limite) || 1;
         res.json({
@@ -159,10 +155,10 @@ export const buscar = async (req, res) => {
             }
         })
     } catch (error) {
-        console.error('Error al buscar productos', error);
+        console.error('Error al buscar categorías', error);
         res.status(500).json({
             estado: false,
-            mensaje: 'Error al buscar productos',
+            mensaje: 'Error al buscar categorias',
             error: error.message,
         });
 
