@@ -1,6 +1,7 @@
 import Producto from '../models/producto.js';
 import Categoria from '../models/categoria.js';
 import Imagen from '../models/imagen.js';
+import { Op } from 'sequelize';
 
 export const obtener = async (req, res) => {
     try {
@@ -27,6 +28,13 @@ export const obtener = async (req, res) => {
 export const obtenerPorId = async (req, res) => {
     try {
         const id = parseInt(req.params.id, 10);
+
+        if (Number.isNaN(id)) {
+            return res.status(400).json({
+                estado: false,
+                mensaje: 'El id del producto debe ser numérico',
+            });
+        }
 
         const data = await Producto.findByPk(id, {
             include: [
@@ -58,16 +66,16 @@ export const obtenerPorId = async (req, res) => {
 
 export const crear = async (req, res) => {
     try {
-        const { 
-            idCategoria, 
-            nombre, 
-            marca, 
-            modelo, 
-            descripcion, 
-            precio, 
-            stock, 
-            socketCompatibilidad, 
-            especificacionesTecnicas 
+        const {
+            idCategoria,
+            nombre,
+            marca,
+            modelo,
+            descripcion,
+            precio,
+            stock,
+            socketCompatibilidad,
+            especificacionesTecnicas
         } = req.body;
 
         if (!nombre || !precio || !idCategoria) {
@@ -156,3 +164,50 @@ export const eliminar = async (req, res) => {
         });
     }
 };
+
+export const buscar = async (req, res) => {
+    try {
+        const pagina = Math.max(1, parseInt(req.query.pagina, 10) || 1);
+        const limite = Math.max(1, parseInt(req.query.limite, 10) || 5);
+        const offset = (pagina - 1) * limite;
+        const where = {};
+        const busqueda = req.query.busqueda?.trim();
+        console.log('BUSQUEDA', busqueda)
+        if (busqueda) {
+            where[Op.or] = [
+                { nombre: { [Op.like]: `%${busqueda}%` } },
+                { descripcion: { [Op.like]: `%${busqueda}%` } },
+                { precio: { [Op.like]: `%${busqueda}%` } }
+            ]
+        }
+
+        const { count, rows } = await Producto.findAndCountAll({
+            where,
+            limit: limite,
+            offset,
+            distinct: true,
+            include: [
+                { model: Categoria, as: 'categoria' },
+            ]
+        })
+        const totalPaginas = Math.ceil(count / limite) || 1;
+        res.json({
+            estado: true,
+            data: {
+                productos: rows,
+                total: count,
+                pagina,
+                limite,
+                totalPaginas,
+            }
+        })
+    } catch (error) {
+        console.error('Error al buscar productos', error);
+        res.status(500).json({
+            estado: false,
+            mensaje: 'Error al buscar productos',
+            error: error.message,
+        });
+
+    }
+}

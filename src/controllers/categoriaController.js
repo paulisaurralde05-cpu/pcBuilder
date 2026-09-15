@@ -122,3 +122,45 @@ export const eliminar = async (req, res) => {
         });
     }
 };
+export const buscar = async (req, res) => {
+    try {
+        const pagina = Math.max(1, parseInt(req.query.pagina, 10) || 1);
+        const limite = Math.max(1, parseInt(req.query.limite, 10) || 5);
+        const offset = (pagina - 1) * limite;
+        const where = {};
+        const busqueda = req.query.busqueda?.trim();
+        console.log('BUSQUEDA', busqueda)
+        if (busqueda) {
+            where[Op.or] = [
+                { nombre: { [Op.like]: `%${busqueda}%` } },
+                { descripcion: { [Op.like]: `%${busqueda}%` } },
+            ]
+        }
+
+        const { count, rows } = await Categoria.findAndCountAll({
+            where,
+            limit: limite,
+            offset,
+            distinct: true,
+        })
+        const totalPaginas = Math.ceil(count / limite) || 1;
+        res.json({
+            estado: true,
+            data: {
+                categorias: rows,
+                total: count,
+                pagina,
+                limite,
+                totalPaginas,
+            }
+        })
+    } catch (error) {
+        console.error('Error al buscar categorías', error);
+        res.status(500).json({
+            estado: false,
+            mensaje: 'Error al buscar categorias',
+            error: error.message,
+        });
+
+    }
+}
