@@ -5,11 +5,13 @@ import {
     crear,
     actualizar,
     eliminar,
+    buscar
 } from '../controllers/categoriaController.js';
 
 const router = Router();
 
 router.get('/', obtener);
+router.get('/buscar', buscar);
 router.get('/:id', obtenerPorId);
 router.post('/', crear);
 router.put('/:id', actualizar);
