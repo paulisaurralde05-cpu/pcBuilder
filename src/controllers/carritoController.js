@@ -2,19 +2,20 @@ import Carrito from '../models/carrito.js';
 import DetallesCarrito from '../models/detallesCarrito.js';
 import Producto from '../models/producto.js';
 import Imagen from '../models/imagen.js';
+import Usuario from '../models/usuario.js';
 
 export const obtenerMiCarrito = async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
         const [carrito] = await Carrito.findOrCreate({
-            where: { idUsuario: usuarioId, estado: 'activo' },
-            defaults: { idUsuario: usuarioId, fechaCreacion: new Date(), estado: 'activo' }
+            where: { idUsuario: usuarioId, estado: true },
+            defaults: { idUsuario: usuarioId, fechaActualizacion: new Date(), estado: true }
         });
 
         const data = await Carrito.findByPk(carrito.id, {
             include: {
                 model: DetallesCarrito,
-                as: 'detalles',
+                as: 'items',
                 include: {
                     model: Producto,
                     as: 'producto',
@@ -41,6 +42,7 @@ export const agregarProducto = async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
         const { idProducto, cantidad } = req.body;
+        console.log('AGREGAR PRODUCTO A USUARIO', usuarioId, idProducto, cantidad)
 
         const cant = parseInt(cantidad, 10) || 1;
 
@@ -60,8 +62,8 @@ export const agregarProducto = async (req, res) => {
         }
 
         const [carrito] = await Carrito.findOrCreate({
-            where: { idUsuario: usuarioId, estado: 'activo' },
-            defaults: { idUsuario: usuarioId, fechaCreacion: new Date(), estado: 'activo' }
+            where: { idUsuario: usuarioId, estado: true },
+            defaults: { idUsuario: usuarioId, fechaActualizacion: new Date(), estado: true }
         });
 
         let detalle = await DetallesCarrito.findOne({
@@ -77,7 +79,8 @@ export const agregarProducto = async (req, res) => {
                 idCarrito: carrito.id,
                 idProducto,
                 cantidad: cant,
-                precioUnitario: producto.precio
+                precioUnitario: producto.precio,
+                subtotal: producto.precio * cantidad
             });
         }
 
@@ -102,7 +105,7 @@ export const eliminarProducto = async (req, res) => {
         const idProducto = parseInt(req.params.idProducto, 10);
 
         const carrito = await Carrito.findOne({
-            where: { idUsuario: usuarioId, estado: 'activo' }
+            where: { idUsuario: usuarioId, estado: true }
         });
 
         if (!carrito) {
