@@ -1,3 +1,4 @@
+import { sequelize } from '../config/database.js';
 import Pedido from '../models/pedido.js';
 import DetallesPedido from '../models/detallesPedido.js';
 import Carrito from '../models/carrito.js';
@@ -33,15 +34,19 @@ export const obtenerMisPedidos = async (req, res) => {
 };
 
 export const crearDesdeCarrito = async (req, res) => {
+    const t = await sequelize.transaction();
+
     try {
         const usuarioId = req.usuario.id;
 
         const carrito = await Carrito.findOne({
             where: { idUsuario: usuarioId, estado: 'activo' },
-            include: { model: DetallesCarrito, as: 'detalles' }
+            include: { model: DetallesCarrito, as: 'detalles' },
+            transaction: t
         });
 
         if (!carrito || !carrito.detalles || carrito.detalles.length === 0) {
+            await t.rollback();
             return res.status(400).json({
                 estado: false,
                 mensaje: 'El carrito está vacío o no existe'
@@ -58,7 +63,7 @@ export const crearDesdeCarrito = async (req, res) => {
             fechaPedido: new Date(),
             estado: 'Pendiente',
             montoTotal: totalCalculado
-        });
+        }, { transaction: t });
 
         for (const item of carrito.detalles) {
             await DetallesPedido.create({
@@ -66,11 +71,18 @@ export const crearDesdeCarrito = async (req, res) => {
                 idProducto: item.idProducto,
                 cantidad: item.cantidad,
                 precioHistorico: item.precioUnitario
-            });
+            }, { transaction: t });
+
+            const producto = await Producto.findByPk(item.idProducto, { transaction: t });
+            if (producto) {
+                producto.stock -= item.cantidad;
+                await producto.save({ transaction: t });
+            }
         }
 
         carrito.estado = 'cerrado';
-        await carrito.save();
+        await carrito.save({ transaction: t });
+        await t.commit();
 
         res.status(201).json({
             estado: true,
@@ -78,6 +90,7 @@ export const crearDesdeCarrito = async (req, res) => {
             data: nuevoPedido
         });
     } catch (error) {
+        await t.rollback();
         console.error('Error al crear pedido:', error);
         res.status(500).json({
             estado: false,
