@@ -37,11 +37,11 @@ export const crearDesdeCarrito = async (req, res) => {
         const usuarioId = req.usuario.id;
 
         const carrito = await Carrito.findOne({
-            where: { idUsuario: usuarioId, estado: 'activo' },
-            include: { model: DetallesCarrito, as: 'detalles' }
+            where: { idUsuario: usuarioId, estado: true },
+            include: { model: DetallesCarrito, as: 'items' }
         });
 
-        if (!carrito || !carrito.detalles || carrito.detalles.length === 0) {
+        if (!carrito || !carrito.items || carrito.items.length === 0) {
             return res.status(400).json({
                 estado: false,
                 mensaje: 'El carrito está vacío o no existe'
@@ -49,27 +49,27 @@ export const crearDesdeCarrito = async (req, res) => {
         }
 
         let totalCalculado = 0;
-        carrito.detalles.forEach(d => {
-            totalCalculado += parseFloat(d.precioUnitario) * d.cantidad;
+        carrito.items.forEach(item => {
+            totalCalculado += parseFloat(item.subtotal);
         });
 
         const nuevoPedido = await Pedido.create({
             idUsuario: usuarioId,
             fechaPedido: new Date(),
             estado: 'Pendiente',
-            montoTotal: totalCalculado
+            total: totalCalculado
         });
 
-        for (const item of carrito.detalles) {
+        for (const item of carrito.items) {
             await DetallesPedido.create({
                 idPedido: nuevoPedido.id,
                 idProducto: item.idProducto,
                 cantidad: item.cantidad,
-                precioHistorico: item.precioUnitario
+                precioUnitario: parseFloat(item.subtotal) / item.cantidad
             });
         }
 
-        carrito.estado = 'cerrado';
+        carrito.estado = false;
         await carrito.save();
 
         res.status(201).json({

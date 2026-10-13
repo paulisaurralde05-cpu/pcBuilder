@@ -1,5 +1,5 @@
 import 'dotenv/config';
-
+import bycrypt from 'bcryptjs';
 import {
     Producto,
     Usuario,
@@ -21,12 +21,15 @@ const categoriasSeed = [
     { nombre: 'Perifericos', descripcion: 'Teclados, mouses y auriculares' }
 ];
 
+const hashPassword= await bycrypt.hash('admin-contraseña-2026', 10);
+const hashPasswordCliente= await bycrypt.hash('cliente123', 10);
+console.log('PASS',hashPassword)
 const administradoresSeed = [
     {
         nombre: 'Juan',
         apellido: 'Perez',
         email: 'juanadmin@gmail.com',
-        password: 'admin-contraseña-2026',
+        password: hashPassword,
         legajoEmpleado: 'LEG-001',
         nivelPermiso: 'SuperAdmin'
     }
@@ -37,7 +40,7 @@ const clientesSeed = [
         nombre: 'Cliente',
         apellido: 'Prueba',
         email: 'cliente@example.com',
-        password: 'cliente123',
+        password: hashPasswordCliente,
         fechaRegistro: new Date()
     }
 ];
