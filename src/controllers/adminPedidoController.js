@@ -2,6 +2,7 @@ import Pedido from "../models/pedido.js";
 import DetallesPedido from "../models/detallesPedido.js";
 import Usuario from "../models/usuario.js";
 import Producto from "../models/producto.js";
+import { mailCambioPedido } from '../services/emailService.js';
 
 export const getPedidos = async (req, res) => {
   try {

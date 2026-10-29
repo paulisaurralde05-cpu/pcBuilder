@@ -1,4 +1,5 @@
 import { compararPassword, generarToken, JWT_SECRET_CLIENT, JWT_SECRET_ADMIN, encriptarPassword } from '../utils/auth.js';
+import { mailRegistro } from '../services/emailService.js';
 import Usuario from '../models/usuario.js';
 import Administrador from '../models/administrador.js';
 
@@ -91,6 +92,8 @@ export const registrarCliente = async (req, res) => {
             email: cliente.email,
             tipo: 'cliente',
         }, JWT_SECRET_CLIENT);
+
+        mailRegistro(cliente.email, cliente.nombre);
 
         res.status(201).json({
             estado: true,

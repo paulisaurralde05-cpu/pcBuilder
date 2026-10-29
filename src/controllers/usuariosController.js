@@ -1,5 +1,6 @@
 import Usuario from '../models/usuario.js';
 
+
 export const obtener = async (req, res) => {
     try {
         const data = await Usuario.findAll({
@@ -50,6 +51,7 @@ export const obtenerPorId = async (req, res) => {
 export const crear = async (req, res) => {
     try {
         const data = await Usuario.create(req.body);
+        
 
         res.status(201).json({
             estado: true,

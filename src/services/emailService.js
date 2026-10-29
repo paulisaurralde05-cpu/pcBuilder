@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const mailRegistro = async (emailCliente, nombreUsuario) => {
-    try {
+    try { 
         const info = await transporter.sendMail({
             from: '"pcBuilder" <soporte@pcbuilder.com>',
             to: emailCliente,
@@ -44,5 +44,24 @@ export const mailRecuperacion = async (emailCliente, tokenRecuperacion) => {
         return info;
     } catch (error) {
         console.error('Error al enviar mail de recuperación: ', error.message);
+    }
+};
+
+export const mailCambioPedido = async (emailCliente, pedido, nuevoEstado) => {
+    try {
+        const info = await transporter.sendMail({
+            from: '"pcBuilder" <soporte@pcbuilder.com>',
+            to: emailCliente,
+            subject: 'Actualización de su pedido ${pedido.id} - pcBuilder',
+            html: `
+            <div>
+               <h2>Hola</h2>
+               <p>El estado de su pedido ${pedido.id} ha cambiado.</p>
+            </div>`,
+        });
+        console.log('Mail de cambio de estado enviado: ', info.messageId);
+        return info;
+    } catch (error) {
+        console.error('Error al enviar mail: ', error.message);
     }
 };
