@@ -37,6 +37,7 @@ export const crearDesdeCarrito = async (req, res) => {
     const t = await sequelize.transaction();
 
     try {
+        // obtener usuario (viene en el token)
         const usuarioId = req.usuario.id;
 
         const carrito = await Carrito.findOne({
