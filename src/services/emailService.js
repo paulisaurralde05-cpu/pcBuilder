@@ -66,16 +66,33 @@ export const mailCambioPedido = async (emailCliente, pedido, nuevoEstado) => {
     }
 };
 
-export const mailNuevoPedido = async (emailAdmin, pedido) => {
+export const mailNuevoPedido = async (emailAdmin, usuario, pedido, detalle) => {
     try {
+        const listaItems = Array.isArray(detalle) ? detalle : [detalle];
         const info = await transporter.sendMail({
             from: '"pcBuilder" <soporte@pcbuilder.com>',
-            to: emailCliente,
-            subject: 'Notificación nuevo pedido',
+            to: emailAdmin,
+            subject: 'Nuevo pedido recibido',
             html: `
-            <div>
-               <h2>Hola</h2>
-               <p></p>
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+               <h2>¡Nuevo pedido registrado en pcBuilder!</h2>
+               <p><strong>Cliente:</strong> ${usuario.nombre} (${usuario.email})</p>
+               <p><strong>Monto total:</strong> $${pedido.total}</p>
+               <p><strong>Fecha:</strong> ${new Date(pedido.fechaPedido).toLocaleString()}</p>
+               
+               <h3>Detalle de la compra:</h3>
+               <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                   <ul style="list-style: none; padding: 0; margin: 0;">
+                       ${listaItems.map((det) => `
+                           <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                               <strong>Producto ID:</strong> ${det.idProducto || det.productoId} 
+                               | <strong>Cantidad:</strong> ${det.cantidad}
+                           </li>
+                       `).join('')}
+                   </ul>
+               </div>
+
+               <p>Ingresá al panel de administración para gestionar este envío.</p>
             </div>`,
         });
         console.log('Mail de nuevo pedido enviado: ', info.messageId);
