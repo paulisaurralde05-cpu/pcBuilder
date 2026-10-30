@@ -65,3 +65,64 @@ export const mailCambioPedido = async (emailCliente, pedido, nuevoEstado) => {
         console.error('Error al enviar mail: ', error.message);
     }
 };
+
+export const mailNuevoPedido = async (emailAdmin, pedido) => {
+    try {
+        const info = await transporter.sendMail({
+            from: '"pcBuilder" <soporte@pcbuilder.com>',
+            to: emailCliente,
+            subject: 'Notificación nuevo pedido',
+            html: `
+            <div>
+               <h2>Hola</h2>
+               <p></p>
+            </div>`,
+        });
+        console.log('Mail de nuevo pedido enviado: ', info.messageId);
+        return info;
+    } catch (error) {
+        console.error('Error al enviar mail: ', error.message);
+    }
+};
+
+export const mailNuevoPedidoCliente = async (emailCliente, detalle) => {
+    try {
+        const listaItems = Array.isArray(detalle) ? detalle : [detalle];
+
+        const info = await transporter.sendMail({
+            from: '"pcBuilder" <soporte@pcbuilder.com>',
+            to: emailCliente,
+            subject: 'Compra confirmada - pcBuilder',
+            html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+               <h2>¡Gracias por tu compra!</h2>
+               <p>Hemos recibido tu pedido correctamente. Este es el detalle de tus productos:</p>
+               
+               <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                   <ul style="list-style: none; padding: 0; margin: 0;">
+                       ${listaItems.map((det) => {
+                           const idProd = det.idProducto || det.id_producto || det.productoId || 'N/A';
+                           const cant = det.cantidad || 1;
+                           const precio = det.precioUnitario || det.precio || '';
+
+                           return `
+                               <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+                                   <strong>Producto ID:</strong> ${idProd} 
+                                   | <strong>Cantidad:</strong> ${cant}
+                                   ${precio ? `| <strong>Precio:</strong> $${precio}` : ''}
+                               </li>
+                           `;
+                       }).join('')}
+                   </ul>
+               </div>
+
+               <p>Te avisaremos cuando tu paquete esté en camino.</p>
+            </div>`,
+        });
+
+        console.log('Mail de nuevo pedido enviado a Mailtrap:', info.messageId);
+        return info;
+    } catch (error) {
+        console.error('Error al enviar mail de nuevo pedido:', error.message);
+    }
+};

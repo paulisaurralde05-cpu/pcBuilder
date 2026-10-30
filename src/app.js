@@ -37,7 +37,7 @@ const PUERTO = process.env.PORT || 3000;
 
 const iniciarServidor = async () => {
     try {
-        await sequelize.sync({ alter: true });
+        await sequelize.sync({ alter: false });
 
         // await sequelize.authenticate();
         console.log('Conexión a la base de datos establecida correctamente.');

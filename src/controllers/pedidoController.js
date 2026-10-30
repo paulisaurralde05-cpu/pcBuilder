@@ -4,6 +4,7 @@ import DetallesPedido from '../models/detallesPedido.js';
 import Carrito from '../models/carrito.js';
 import DetallesCarrito from '../models/detallesCarrito.js';
 import Producto from '../models/producto.js';
+import { mailNuevoPedidoCliente } from '../services/emailService.js';
 
 export const obtenerMisPedidos = async (req, res) => {
     try {
@@ -39,6 +40,7 @@ export const crearDesdeCarrito = async (req, res) => {
     try {
         // obtener usuario (viene en el token)
         const usuarioId = req.usuario.id;
+        const usuario = req.usuario;
 
         const carrito = await Carrito.findOne({
             where: { idUsuario: usuarioId, estado: true },
@@ -66,24 +68,31 @@ export const crearDesdeCarrito = async (req, res) => {
             total: totalCalculado
         }, { transaction: t });
 
+        const detallesCreados = [];
+
         for (const item of carrito.items) {
-            await DetallesPedido.create({
+              const detalle = await DetallesPedido.create({
                 idPedido: nuevoPedido.id,
                 idProducto: item.idProducto,
                 cantidad: item.cantidad,
                 precioUnitario: parseFloat(item.subtotal) / item.cantidad
             }, { transaction: t });
 
+            detallesCreados.push(detalle);
+
             const producto = await Producto.findByPk(item.idProducto, { transaction: t });
             if (producto) {
                 producto.stock -= item.cantidad;
                 await producto.save({ transaction: t });
             }
+            
         }
 
         carrito.estado = false;
         await carrito.save({ transaction: t });
         await t.commit();
+
+        mailNuevoPedidoCliente(usuario.email, detallesCreados);
 
         res.status(201).json({
             estado: true,
