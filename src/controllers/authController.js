@@ -1,7 +1,9 @@
+import { Op } from 'sequelize';
 import { compararPassword, generarToken, JWT_SECRET_CLIENT, JWT_SECRET_ADMIN, encriptarPassword } from '../utils/auth.js';
-import { mailRegistro } from '../services/emailService.js';
+import { mailRegistro, mailRecuperarPassword } from '../services/emailService.js';
 import Usuario from '../models/usuario.js';
 import Administrador from '../models/administrador.js';
+import bcrypt from 'bcryptjs';
 
 export const loginCliente = async (req, res) => {
     try {
@@ -228,5 +230,104 @@ export const registrarAdmin = async (req, res) => {
             mensaje: 'Error al registrar el administrador',
             error: error.message,
         });
+    }
+};
+
+export const solicitarRecuperacion = async (req, res) => {
+    try {
+        // extrae el mail del cuerpo de la petición.
+        const { email } = req.body;
+
+        // si no hay mail, devuelve error.
+        if (!email) {
+            return res.status(400).json({ estado: false, mensaje: 'El email es obligatorio' });
+        }
+
+        // busca el usuario en la bd.
+        const usuario = await Usuario.findOne({ where: { email } });
+
+        // si no está en la bd, igualmente responde de manera "neutra" para que no sepan que mails están registrados.
+        if (!usuario) {
+            return res.status(200).json({
+                estado: true,
+                mensaje: 'Si el correo está registrado, recibirás un código de verificación.'
+            });
+        }
+
+        // generamos el código (entre 100000 y 999999) y lo convierte a texto.
+        const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // guardamos el código y le damos 15 minutos de validez.
+        usuario.codigoRecuperacion = codigo;
+
+        // calcula la fecha, y le suma 15 min (en milisegundos, 15 * 60 * 1000), y se guarda en codigoExpiracion.
+        usuario.codigoExpiracion = new Date(Date.now() + 15 * 60 * 1000);
+
+        // guarda los nuevos datos (codigoExpiracion y codigoRecupoeracion)
+        await usuario.save();
+
+        // envia el correo
+        mailRecuperarPassword(usuario.email, codigo);
+
+        // responde al cliente, avisando que el mail fue enviado.
+        return res.status(200).json({
+            estado: true,
+            mensaje: 'Si el correo está registrado, recibirás un código de verificación.'
+        });
+
+    } catch (error) {
+        console.error('Error en solicitar recuperacion:', error);
+        return res.status(500).json({ estado: false, mensaje: 'Error al procesar la solicitud' });
+    }
+};
+
+export const restablecerPassword = async (req, res) => {
+    try {
+        // obtiene del cuerpo de la peticion el correo, el pin y la nueva contraseña.
+        const { email, codigo, nuevaPassword } = req.body;
+
+        // valida que no llegue vacío ningún parámetro
+        if (!email || !codigo || !nuevaPassword) {
+            return res.status(400).json({ 
+                estado: false, 
+                mensaje: 'Faltan datos obligatorios (email, código o nueva contraseña)' 
+            });
+        }
+
+        // buscamos usuario donde coincida el email, el código y que NO haya expirado
+        const usuario = await Usuario.findOne({
+            where: {
+                email,
+                codigoRecuperacion: codigo,
+                codigoExpiracion: { [Op.gt]: new Date() } // mayor a la hora actual
+            }
+        });
+
+        if (!usuario) {
+            return res.status(400).json({
+                estado: false,
+                mensaje: 'El código es incorrecto o ya ha expirado'
+            });
+        }
+
+        // hasheamos la nueva clave
+        const salt = 10;
+        usuario.password = await bcrypt.hash(nuevaPassword, salt);
+
+        // limpia los campos para que el código no sirva dos veces
+        usuario.codigoRecuperacion = null;
+        usuario.codigoExpiracion = null;
+
+        // aplica los cambios (la nueva contraseña y los codigos de recuperacion y expiracion limpios)
+        await usuario.save();
+
+        return res.status(200).json({
+            estado: true,
+            mensaje: 'Contraseña actualizada con éxito. Ya podés iniciar sesión.'
+        });
+
+    } catch (error) {
+        console.error('Error en restablecerPassword:', error);
+        return res.status(500).json({ estado: false, mensaje: 'Error al restablecer la contraseña' });
     }
 };
