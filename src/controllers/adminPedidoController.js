@@ -72,6 +72,7 @@ export const getPedidoById = async (req, res) => {
     });
   }
 };
+
 export const actualizarPedido = async (req, res) => {
   try {
     const { id } = req.params;

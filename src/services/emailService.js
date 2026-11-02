@@ -16,34 +16,20 @@ export const mailRegistro = async (emailCliente, nombreUsuario) => {
             to: emailCliente,
             subject: 'Bienvenido a pcBuilder',
             html: `
-            <div>
-               <h2>Hola ${nombreUsuario}</h2>
-               <p>Tu cuenta en pcBuilder fue creada exitosamente.</p>
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 500px;">
+               <h2> Hola ${nombreUsuario} </h2>
+               <p style="font-size: 14px; color: #64748b;">Tu cuenta en <strong>pcBuilder</strong> fue creada exitosamente.</p>
+               
+               <div style="background-color: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0;">
+                   <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb;">Podes acceder a la página entrando en el siguiente enlace: </span>
+               </div>
+
             </div>`,
         });
         console.log('Mail de bienvenida enviado: ', info.messageId);
         return info;
     } catch (error) {
         console.error('Error al enviar mail: ', error.message);
-    }
-};
-
-export const mailRecuperacion = async (emailCliente, tokenRecuperacion) => {
-    try {
-        const info = await transporter.sendMail({
-            from: '"pcBuilder" <soporte@pcbuilder.com>',
-            to: emailCliente,
-            subject: 'Recuperar contraseña - pcBuilder',
-            html: `
-            <div>
-               <h2>Hola</h2>
-               <p>Solicitaste restablecer tu contraseña.</p>
-            </div>`,
-        });
-        console.log('Mail recuperación enviado: ', info.messageId);
-        return info;
-    } catch (error) {
-        console.error('Error al enviar mail de recuperación: ', error.message);
     }
 };
 
@@ -54,9 +40,10 @@ export const mailCambioPedido = async (emailCliente, pedido, nuevoEstado) => {
             to: emailCliente,
             subject: 'Actualización de su pedido ${pedido.id} - pcBuilder',
             html: `
-            <div>
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 500px;">
                <h2>Hola</h2>
-               <p>El estado de su pedido ${pedido.id} ha cambiado.</p>
+               <p style="font-size: 14px; color: #64748b;" >El estado de su pedido ${pedido.id} ha cambiado. </p>
+               <p style="font-size: 14px; color: #64748b;" >${nuevoEstado}. </p>
             </div>`,
         });
         console.log('Mail de cambio de estado enviado: ', info.messageId);
@@ -77,7 +64,7 @@ export const mailNuevoPedido = async (emailAdmin, usuario, pedido, detalle) => {
             to: emailAdmin,
             subject: 'Nuevo pedido recibido',
             html: `
-            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 500px;">
                <h2>¡Nuevo pedido registrado en pcBuilder!</h2>
                <p><strong>Cliente:</strong> ${usuario.nombre} (${usuario.email})</p>
                <p><strong>Monto total:</strong> $${pedido.total}</p>
@@ -114,7 +101,7 @@ export const mailNuevoPedidoCliente = async (emailCliente, detalle) => {
             to: emailCliente,
             subject: 'Compra confirmada - pcBuilder',
             html: `
-            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 500px;">
                <h2>Gracias por tu compra!</h2>
                <p>Hemos recibido tu pedido correctamente. Este es el detalle de tus productos:</p>
                
