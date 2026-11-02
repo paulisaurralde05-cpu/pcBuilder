@@ -20,8 +20,10 @@ export const mailRegistro = async (emailCliente, nombreUsuario) => {
                <h2> Hola ${nombreUsuario} </h2>
                <p style="font-size: 14px; color: #64748b;">Tu cuenta en <strong>pcBuilder</strong> fue creada exitosamente.</p>
                
-               <div style="background-color: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0;">
-                   <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb;">Podes acceder a la página entrando en el siguiente enlace: </span>
+               <div style="text-align: center; margin: 24px 0;">
+                   <a href="http://localhost:5173/login" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                       Iniciar sesión en pcBuilder
+                   </a>
                </div>
 
             </div>`,
@@ -38,7 +40,7 @@ export const mailCambioPedido = async (emailCliente, pedido, nuevoEstado) => {
         const info = await transporter.sendMail({
             from: '"pcBuilder" <soporte@pcbuilder.com>',
             to: emailCliente,
-            subject: 'Actualización de su pedido ${pedido.id} - pcBuilder',
+            subject: `Actualización de su pedido ${pedido.id} - pcBuilder`,
             html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 500px;">
                <h2>Hola</h2>
