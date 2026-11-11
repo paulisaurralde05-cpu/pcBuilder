@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 
 const Administrador = sequelize.define('Administrador', {
-
+    
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     nombre: { type: DataTypes.STRING(100), allowNull: false },
     apellido: { type: DataTypes.STRING(100), allowNull: false },
