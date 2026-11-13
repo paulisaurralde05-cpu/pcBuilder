@@ -9,7 +9,8 @@ const Producto = sequelize.define(
     descripcion: { type: DataTypes.TEXT, allowNull: true },
     precio: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     stock: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    socketCompatibilidad: { type: DataTypes.STRING(50), allowNull: true },
+
+    socketCompatibilidad: { type: DataTypes.STRING(50), allowNull: true }, // LO SACAMOS?
     especificacionesTecnicas: { type: DataTypes.TEXT, allowNull: true },
 
     // Indica si el producto aparece en la sección "Destacados" de la home.

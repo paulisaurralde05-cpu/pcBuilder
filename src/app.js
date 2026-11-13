@@ -14,25 +14,32 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
+  // Usamos una función para validar el origen dinámicamente.
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
+    // Si el origen de la petición está en nuestra lista blanca, lo permitimos.
     if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
+    // Si no está en la lista, lanzamos advertencia y error.
     console.warn(`Origen no permitido por CORS: ${origin}`);
     return callback(new Error("No permitido por CORS"));
   },
-  credentials: true,
+  credentials: true, // Permite enviar cookies/headers de autenticación (como tu token JWT)
 };
-
+// Aplicamos el middleware de CORS a todas las rutas.
 app.use(cors(corsOptions));
 
-app.use(express.json());
+app.use(express.json()); // Middleware para parsear el body de las peticiones (transforma JSON a objeto JS).
 
+<<<<<<< HEAD
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+=======
+//RUTAS
+>>>>>>> 1c356a8a4b74b8242845f4d3f79d24557cc83193
 app.use("/", routes);
 
 const PUERTO = process.env.PORT || 3000;
@@ -49,6 +56,7 @@ const iniciarServidor = async () => {
     });
   } catch (error) {
     console.error("No se pudo conectar a la base de datos:", error);
+    process.exit(1); // AGREGO ESTO---Apaga la DB si falla la conexión.
   }
 };
 

@@ -1,9 +1,17 @@
+<<<<<<< HEAD
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
 const Administrador = sequelize.define(
   "Administrador",
   {
+=======
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/database.js';
+
+const Administrador = sequelize.define('Administrador', {
+    
+>>>>>>> 1c356a8a4b74b8242845f4d3f79d24557cc83193
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     nombre: { type: DataTypes.STRING(100), allowNull: false },
     apellido: { type: DataTypes.STRING(100), allowNull: false },
