@@ -11,19 +11,20 @@ import {
 } from "../controllers/productoController.js";
 
 import { verificarAdmin } from "../middleware/auth.js";
+import { upload } from "../middleware/upload.js"; 
+
 const router = Router();
 
+// Rutas públicas
 router.get("/", obtener);
-
-// Importante que vaya ANTES de '/:id', sino Express piensa que "destacados" es un ID.
 router.get("/destacados", obtenerDestacados);
-
 router.get("/buscar", buscar);
 router.get("/:id", obtenerPorId);
 
-router.post("/", verificarAdmin, crear);
-router.put("/:id", verificarAdmin, actualizar);
+// Rutas protegidas
+router.post("/", verificarAdmin, upload.single("imagen"), crear);
+router.put("/:id", verificarAdmin, upload.single("imagen"), actualizar);
 router.delete("/:id", verificarAdmin, eliminar);
-
 router.patch("/:id/destacar", verificarAdmin, cambiarDestacado);
+
 export default router;

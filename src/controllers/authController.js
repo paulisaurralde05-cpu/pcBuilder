@@ -50,6 +50,7 @@ export const loginCliente = async (req, res) => {
                 email: cliente.email,
             },
         });
+        
     } catch (error) {
         console.error('Error en loginCliente:', error);
         res.status(500).json({

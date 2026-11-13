@@ -43,9 +43,9 @@ export const mailCambioPedido = async (emailCliente, pedido, nuevoEstado) => {
             subject: `Actualización de su pedido ${pedido.id} - pcBuilder`,
             html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 500px;">
-               <h2>Hola</h2>
-               <p style="font-size: 14px; color: #64748b;" >El estado de su pedido ${pedido.id} ha cambiado. </p>
-               <p style="font-size: 14px; color: #64748b;" >${nuevoEstado}. </p>
+               <h2>Hola!</h2>
+               <p style="font-size: 14px; color: #64748b;" >El estado de su pedido #${pedido.id} ha cambiado. </p>
+               <p style="font-size: 14px; color: #64748b;" >El pedido fue: <strong>${nuevoEstado}</strong>. </p>
             </div>`,
         });
         console.log('Mail de cambio de estado enviado: ', info.messageId);

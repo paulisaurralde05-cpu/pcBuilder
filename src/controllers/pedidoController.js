@@ -104,7 +104,7 @@ export const crearDesdeCarrito = async (req, res) => {
 
     setTimeout(() => {
       console.log(
-        "Esperando 10 segundos para enviar el mail al administrador...",
+        "Esperando unos segundos para enviar el mail al administrador...",
       );
       mailNuevoPedido(
         "juanadmin@gmail.com",
@@ -112,7 +112,7 @@ export const crearDesdeCarrito = async (req, res) => {
         nuevoPedido,
         detallesCreados,
       );
-    }, 10000);
+    }, 15000);
 
     res.status(201).json({
       estado: true,

@@ -95,7 +95,23 @@ export const crear = async (req, res) => {
       stock: stock || 0,
       socketCompatibilidad,
       especificacionesTecnicas,
+      imagen: imagenUrl,
     });
+
+    // Verificar si Multer procesó un archivo en req.file 
+    let imagenUrl = null; 
+    if (req.file) { 
+      imagenUrl = `/uploads/${req.file.filename}`; 
+    } else if (req.body.imagen) { 
+      imagenUrl = req.body.imagen; 
+    }
+
+    if (imagenUrl) { 
+      await Imagen.create({ 
+        nombre: req.file.originalname || 'imagen-producto', 
+        url: imagenUrl, 
+        idProducto: data.id, 
+      }); }
 
     res.status(201).json({
       estado: true,
@@ -122,6 +138,16 @@ export const actualizar = async (req, res) => {
         mensaje: "Producto no encontrado",
       });
     }
+
+    const datosActualizados = { ...req.body };
+
+    // si Multer procesó un archivo de imagen nuevo, asignamos su ruta 
+    if (req.file) { 
+      datosActualizados.imagen = `/uploads/${req.file.filename}`; 
+    }
+
+    // actualizamos el producto (si no subió foto nueva, conserva la imagen anterior) 
+    await producto.update(datosActualizados);
 
     await producto.update(req.body);
     res.json({
