@@ -5,19 +5,13 @@ import { Op } from "sequelize";
 
 export const obtener = async (req, res) => {
   try {
-    // findAll() trae todos los registros de la tabla.
-    // El "include" hace un JOIN (Eager Loading-carga anticipado) para traer la categoría y las imágenes asociadas.
     const data = await Producto.findAll({
       include: [
         { model: Categoria, as: "categoria" },
         { model: Imagen, as: "imagenes" },
       ],
     });
-    // Respondemos con un JSON estandarizado (útil para que el frontend sepa que todo salió bien).
-    res.json({
-      estado: true,
-      data,
-    });
+    res.json({ estado: true, data });
   } catch (error) {
     console.error("Error al obtener productos:", error);
     res.status(500).json({
@@ -30,36 +24,25 @@ export const obtener = async (req, res) => {
 
 export const obtenerPorId = async (req, res) => {
   try {
-    // Los params de la URL llegan como string, los convertimos a entero base 10.
     const id = parseInt(req.params.id, 10);
-
-    // VALIDACIÓN CLAVE-- Si el ID no es un número (ej. /productos/abc),
-    // evitamos que Sequelize explote lanzando un error 400.
     if (Number.isNaN(id)) {
       return res.status(400).json({
         estado: false,
         mensaje: "El id del producto debe ser numérico",
       });
     }
-
     const data = await Producto.findByPk(id, {
       include: [
         { model: Categoria, as: "categoria" },
         { model: Imagen, as: "imagenes" },
       ],
     });
-
     if (!data) {
-      return res.status(404).json({
-        estado: false,
-        mensaje: "Producto no encontrado",
-      });
+      return res
+        .status(404)
+        .json({ estado: false, mensaje: "Producto no encontrado" });
     }
-
-    res.json({
-      estado: true,
-      data,
-    });
+    res.json({ estado: true, data });
   } catch (error) {
     console.error("Error al obtener producto:", error);
     res.status(500).json({
@@ -70,21 +53,21 @@ export const obtenerPorId = async (req, res) => {
   }
 };
 
+// 🔥 CREAR PRODUCTO CORREGIDO
 export const crear = async (req, res) => {
   try {
     const {
       idCategoria,
       nombre,
-      marca, //AGREGAR AL MODELO O BORRAR
-      modelo, //AGREGAR AL MODELO O BORRAR
+      marca,
+      modelo,
       descripcion,
       precio,
       stock,
-      socketCompatibilidad, //DECIDIR QUE HACER
+      socketCompatibilidad,
       especificacionesTecnicas,
     } = req.body;
 
-    // Validación de campos obligatorios. Si falta alguno, devolvemos 400.
     if (!nombre || !precio || !idCategoria) {
       return res.status(400).json({
         estado: false,
@@ -92,7 +75,15 @@ export const crear = async (req, res) => {
       });
     }
 
-    // Sequelize inserta el nuevo registro en MySQL.
+    // 1. Verificamos si Multer subió un archivo y calculamos la URL
+    let imagenUrl = null;
+    if (req.file) {
+      imagenUrl = `/uploads/${req.file.filename}`;
+    } else if (req.body.imagen) {
+      imagenUrl = req.body.imagen; // Por si envían una URL de texto
+    }
+
+    // 2. Creamos el producto (sin intentar guardar la imagen en esta tabla)
     const data = await Producto.create({
       idCategoria,
       nombre,
@@ -100,31 +91,21 @@ export const crear = async (req, res) => {
       modelo,
       descripcion,
       precio,
-      stock: stock || 0, // Si el admin no envía stock, por defecto es 0.
+      stock: stock || 0,
       socketCompatibilidad,
       especificacionesTecnicas,
-      imagen: imagenUrl,
     });
 
-    // Verificar si Multer procesó un archivo en req.file 
-    let imagenUrl = null; 
-    if (req.file) { 
-      imagenUrl = `/uploads/${req.file.filename}`; 
-    } else if (req.body.imagen) { 
-      imagenUrl = req.body.imagen; 
+    // 3. Si hay imagen, la guardamos en la tabla Imagen
+    if (imagenUrl) {
+      await Imagen.create({
+        nombre: req.file ? req.file.originalname : "imagen-producto", // Validamos si req.file existe
+        url: imagenUrl,
+        idProducto: data.id,
+      });
     }
 
-    if (imagenUrl) { 
-      await Imagen.create({ 
-        nombre: req.file.originalname || 'imagen-producto', 
-        url: imagenUrl, 
-        idProducto: data.id, 
-      }); }
-
-    res.status(201).json({
-      estado: true,
-      data,
-    });
+    res.status(201).json({ estado: true, data });
   } catch (error) {
     console.error("Error al crear producto:", error);
     res.status(400).json({
@@ -135,35 +116,47 @@ export const crear = async (req, res) => {
   }
 };
 
-//ACTUALIZAR PRODUCTO. (SOLO ADMIN)
+// ACTUALIZAR PRODUCTO CORREGIDO
 export const actualizar = async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    // Primero verificamos que el producto exista antes de intentar actualizarlo.
     const producto = await Producto.findByPk(id);
 
     if (!producto) {
-      return res.status(404).json({
-        estado: false,
-        mensaje: "Producto no encontrado",
-      });
+      return res
+        .status(404)
+        .json({ estado: false, mensaje: "Producto no encontrado" });
     }
 
-    const datosActualizados = { ...req.body };
-
-    // si Multer procesó un archivo de imagen nuevo, asignamos su ruta 
-    if (req.file) { 
-      datosActualizados.imagen = `/uploads/${req.file.filename}`; 
-    }
-
-    // actualizamos el producto (si no subió foto nueva, conserva la imagen anterior) 
-    await producto.update(datosActualizados);
-
+    // 1. Actualizamos los datos de texto del producto
     await producto.update(req.body);
-    res.json({
-      estado: true,
-      data: producto,
-    });
+
+    // 2. Si Multer procesó una imagen nueva, actualizamos la tabla Imagen
+    if (req.file) {
+      const nuevaUrl = `/uploads/${req.file.filename}`;
+
+      // Buscamos si el producto ya tenía una imagen asociada
+      const imagenExistente = await Imagen.findOne({
+        where: { idProducto: id },
+      });
+
+      if (imagenExistente) {
+        // Si ya tenía, le cambiamos la URL
+        await imagenExistente.update({
+          url: nuevaUrl,
+          nombre: req.file.originalname,
+        });
+      } else {
+        // Si no tenía, creamos el registro
+        await Imagen.create({
+          nombre: req.file.originalname,
+          url: nuevaUrl,
+          idProducto: id,
+        });
+      }
+    }
+
+    res.json({ estado: true, data: producto });
   } catch (error) {
     console.error("Error al actualizar producto:", error);
     res.status(400).json({
@@ -174,25 +167,17 @@ export const actualizar = async (req, res) => {
   }
 };
 
-// ELIMINAR UN PRODUCTO (Solo Admin)
 export const eliminar = async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const producto = await Producto.findByPk(id);
-
     if (!producto) {
-      return res.status(404).json({
-        estado: false,
-        mensaje: "Producto no encontrado",
-      });
+      return res
+        .status(404)
+        .json({ estado: false, mensaje: "Producto no encontrado" });
     }
-
-    // destroy() borra el registro de la base de datos.
     await producto.destroy();
-    res.json({
-      estado: true,
-      mensaje: "Producto eliminado correctamente",
-    });
+    res.json({ estado: true, mensaje: "Producto eliminado correctamente" });
   } catch (error) {
     console.error("Error al eliminar producto:", error);
     res.status(500).json({
@@ -203,21 +188,16 @@ export const eliminar = async (req, res) => {
   }
 };
 
-// BUSCADOR DE PRODUCTOS CON PAGINACIÓN (Público)
 export const buscar = async (req, res) => {
   try {
-    // Paginación: Si el front pide pagina 2, le restamos 1 y lo multiplicamos por el límite.
     const pagina = Math.max(1, parseInt(req.query.pagina, 10) || 1);
     const limite = Math.max(1, parseInt(req.query.limite, 10) || 5);
-    const offset = (pagina - 1) * limite; // Cuántos registros debe saltar la BD.
+    const offset = (pagina - 1) * limite;
 
-    const where = {}; // Objeto de condiciones para la consulta SQL.
-    const busqueda = req.query.busqueda?.trim(); // Obtenemos el término y quitamos espacios.
+    const where = {};
+    const busqueda = req.query.busqueda?.trim();
 
-    // Si el usuario escribió algo en el buscador:
     if (busqueda) {
-      // Usamos Op.or para que busque en nombre, descripción O precio.
-      // Op.like con % busca coincidencias parciales (ej. "ryzen" encuentra "AMD Ryzen 5").
       where[Op.or] = [
         { nombre: { [Op.like]: `%${busqueda}%` } },
         { descripcion: { [Op.like]: `%${busqueda}%` } },
@@ -225,27 +205,22 @@ export const buscar = async (req, res) => {
       ];
     }
 
-    // findAndCountAll devuelve DOS cosas: el total de registros (count) y los registros de la página actual (rows).
     const { count, rows } = await Producto.findAndCountAll({
       where,
       limit: limite,
       offset,
-      distinct: true, // IMPORTANTE: Evita que Sequelize duplique filas por el JOIN con categorías
-      include: [{ model: Categoria, as: "categoria" }],
+      distinct: true,
+      include: [
+        { model: Categoria, as: "categoria" },
+        { model: Imagen, as: "imagenes" },
+      ],
     });
 
-    // Calculamos cuántas páginas hay en total (ej. 12 productos / 5 por pág = 3 páginas).
     const totalPaginas = Math.ceil(count / limite) || 1;
 
     res.json({
       estado: true,
-      data: {
-        productos: rows,
-        total: count,
-        pagina,
-        limite,
-        totalPaginas,
-      },
+      data: { productos: rows, total: count, pagina, limite, totalPaginas },
     });
   } catch (error) {
     console.error("Error al buscar productos", error);
@@ -257,10 +232,8 @@ export const buscar = async (req, res) => {
   }
 };
 
-// OBTENER PRODUCTOS DESTACADOS (Para el Home)
 export const obtenerDestacados = async (req, res) => {
   try {
-    // Filtramos directamente en la base de datos con where: featured: true.
     const data = await Producto.findAll({
       where: { featured: true },
       include: [
@@ -268,11 +241,7 @@ export const obtenerDestacados = async (req, res) => {
         { model: Imagen, as: "imagenes" },
       ],
     });
-
-    res.json({
-      estado: true,
-      data,
-    });
+    res.json({ estado: true, data });
   } catch (error) {
     console.error("Error al obtener destacados:", error);
     res.status(500).json({
@@ -283,14 +252,11 @@ export const obtenerDestacados = async (req, res) => {
   }
 };
 
-// CAMBIAR ESTADO DESTACADO (Solo Admin)
 export const cambiarDestacado = async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { featured } = req.body;
 
-    // // VALIDACIÓN CLAVE: Verificamos que el frontend envíe un booleano real.
-    // Si envía el string "true" o un número 1, lo rechazamos para mantener integridad.
     if (typeof featured !== "boolean") {
       return res.status(400).json({
         estado: false,
@@ -299,22 +265,18 @@ export const cambiarDestacado = async (req, res) => {
     }
 
     const producto = await Producto.findByPk(id);
-
     if (!producto) {
-      return res.status(404).json({
-        estado: false,
-        mensaje: "Producto no encontrado",
-      });
+      return res
+        .status(404)
+        .json({ estado: false, mensaje: "Producto no encontrado" });
     }
 
-    // Modificamos solo el campo featured y guardamos.
     producto.featured = featured;
     await producto.save();
 
     res.json({
       estado: true,
       data: producto,
-      // Usamos un operador ternario para enviar un mensaje u otro según el nuevo estado.
       mensaje: featured
         ? "Producto añadido a destacados"
         : "Producto removido de destacados",
