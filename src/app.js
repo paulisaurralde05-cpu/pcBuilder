@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import path from 'path';
+import path from "path";
 import routes from "./routes/index.js";
 import sequelize from "./config/database.js";
 import "./models/index.js";
@@ -34,12 +34,10 @@ app.use(cors(corsOptions));
 
 app.use(express.json()); // Middleware para parsear el body de las peticiones (transforma JSON a objeto JS).
 
-<<<<<<< HEAD
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Servir la carpeta uploads como estática (para que las imágenes sean accesibles públicamente)
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-=======
-//RUTAS
->>>>>>> 1c356a8a4b74b8242845f4d3f79d24557cc83193
+// RUTAS
 app.use("/", routes);
 
 const PUERTO = process.env.PORT || 3000;
@@ -56,7 +54,7 @@ const iniciarServidor = async () => {
     });
   } catch (error) {
     console.error("No se pudo conectar a la base de datos:", error);
-    process.exit(1); // AGREGO ESTO---Apaga la DB si falla la conexión.
+    process.exit(1); // Apaga el proceso si falla la conexión a la DB.
   }
 };
 
